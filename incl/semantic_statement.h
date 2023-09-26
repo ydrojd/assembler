@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <bit>
 
 #include "asm_lang.h"
 #include "isa.h"

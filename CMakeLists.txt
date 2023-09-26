@@ -1,18 +1,44 @@
-cmake_minimum_required(VERSION 3.21)
+cmake_minimum_required(VERSION 3.20)
 project(assembler)
 
-find_package(FLEX REQUIRED)
-flex_target(lexer F.l F.cpp DEFINES_FILE ../F.h)
-
-SET(OBJS ${CMAKE_CURRENT_SOURCE_DIR}/gpp.o)
+add_executable(assembler)
 
 SET_SOURCE_FILES_PROPERTIES(
-        ${OBJS}
+        ./gpp.o
         PROPERTIES
         EXTERNAL_OBJECT true
         GENERATED true
 )
 
-set(CMAKE_CXX_STANDARD 23)
-add_executable(assembler ${OBJS} main.cpp program_options.cpp program_options.h isa.h F.cpp F.h lexer.cpp lexer.h syntax.cpp syntax.h semantic_statement.cpp semantic_statement.h symbol_table.cpp symbol_table.h address_counter.cpp address_counter.h asm_lang.cpp asm_lang.h binary.h isa.cpp templates.h bitwise_functions.h elf_generator.cpp elf_generator.h binary_data.h binary.h semantic_analyzer.cpp semantic_analyzer.h binary_generator.cpp binary_generator.h compilation_unit_t.h)
-target_link_libraries(${PROJECT_NAME} ncurses)
+find_package(FLEX REQUIRED)
+
+flex_target(lexer ./src/F.l F.cpp DEFINES_FILE ./incl/F.h)
+
+target_compile_features(assembler PRIVATE cxx_std_23)
+
+target_sources(assembler PRIVATE
+  ./src/main.cpp
+  ./src/isa.cpp ./incl/isa.h
+  ./src/asm_lang.cpp ./incl/asm_lang.h
+  ./src/binary_generator.cpp ./incl/binary_generator.h
+  ./src/address_counter.cpp ./incl/address_counter.h
+  ./src/elf_generator.cpp ./incl/elf_generator.h
+  ./src/lexer.cpp ./incl/lexer.h
+  ./src/program_options.cpp ./incl/program_options.h
+  ./src/semantic_analyzer.cpp ./incl/semantic_analyzer.h
+  ./src/semantic_statement.cpp ./incl/semantic_statement.h
+  ./src/symbol_table.cpp ./incl/symbol_table.h
+  ./src/syntax.cpp ./incl/syntax.h
+  
+  ./incl/binary.h
+  ./incl/binary_data.h
+  ./incl/templates.h
+
+  ./gpp.o
+  F.cpp ./incl/F.h
+
+)
+
+include_directories(
+  ./incl
+)
