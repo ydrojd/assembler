@@ -4,7 +4,7 @@ project(assembler)
 add_executable(assembler)
 
 SET_SOURCE_FILES_PROPERTIES(
-        ./gpp.o
+        ./gpp/libgpp.a
         PROPERTIES
         EXTERNAL_OBJECT true
         GENERATED true
@@ -15,6 +15,10 @@ find_package(FLEX REQUIRED)
 flex_target(lexer ./src/F.l F.cpp DEFINES_FILE ./incl/F.h)
 
 target_compile_features(assembler PRIVATE cxx_std_23)
+
+target_link_libraries(assembler PRIVATE gpp)
+
+add_subdirectory(gpp)
 
 target_sources(assembler PRIVATE
   ./src/main.cpp
@@ -34,11 +38,10 @@ target_sources(assembler PRIVATE
   ./incl/binary_data.h
   ./incl/templates.h
 
-  ./gpp.o
   F.cpp ./incl/F.h
-
 )
 
 include_directories(
   ./incl
+  ./
 )

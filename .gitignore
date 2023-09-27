@@ -1,5 +1,8 @@
 cmake-build-debug
 F.cpp
 CMakeFiles
-CmakeCache.txt
+CMakeCache.txt
 cmake_install.cmake
+Makefile
+assembler
+gpp
