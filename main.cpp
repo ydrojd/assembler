@@ -1,7 +1,7 @@
 #include <iostream>
 
-#include "semantic_analyzer.h"
 #include "binary_generator.h"
+#include "semantic_analyzer.h"
 #include "isa.h"
 #include "semantic_statement.h"
 #include "syntax.h"
@@ -12,9 +12,7 @@
 #include <boost/interprocess/streams/bufferstream.hpp>
 
 extern "C" int gpp(int argc, char **argv, FILE *output_file, FILE *input_file);
-
-
-int main(int argc, char *args[]) {
+ int main(int argc, char *args[]) {
     auto options = program_options(argc, args);
 
     //---run gpp preprocessor---//

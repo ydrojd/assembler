@@ -20,8 +20,12 @@ target_link_libraries(assembler PRIVATE gpp)
 
 add_subdirectory(gpp)
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS true)
+
 target_sources(assembler PRIVATE
-  ./src/main.cpp
+  ./main.cpp
+  F.cpp ./incl/F.h
+
   ./src/isa.cpp ./incl/isa.h
   ./src/asm_lang.cpp ./incl/asm_lang.h
   ./src/binary_generator.cpp ./incl/binary_generator.h
@@ -37,11 +41,9 @@ target_sources(assembler PRIVATE
   ./incl/binary.h
   ./incl/binary_data.h
   ./incl/templates.h
-
-  F.cpp ./incl/F.h
 )
 
 include_directories(
-  ./incl
+  ./incl/
   ./
 )
