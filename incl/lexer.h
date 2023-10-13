@@ -41,13 +41,13 @@ public:
         token() = default;
 
     private:
-        types id = types::none;
+	int line = -1;
+	types id = types::none;
         std::string text_m;
-
         static const std::string &type_to_string(types typ);
 
     public:
-
+	int get_line() const;
         bool is_integer() const;
         const types get_type() const { return id; }
         const std::string &get_text() const { return text_m; }

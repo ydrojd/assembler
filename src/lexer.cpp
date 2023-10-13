@@ -8,6 +8,7 @@ lexer::token lexer::fetch_token() {
     if (yyin.eof()) {
         read_token_m.id = token::types::eof;
         read_token_m.text_m = "";
+	read_token_m.line = yylineno;
 
         return read_token_m;
     }
@@ -19,6 +20,7 @@ lexer::token lexer::fetch_token() {
 
     read_token_m.id = token_type;
     read_token_m.text_m = yytext;
+    read_token_m.line = yylineno;
 
     return read_token_m;
 }

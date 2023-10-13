@@ -1,5 +1,6 @@
 /*defintion*/
 %option c++
+%option yylineno
 
 %{
     enum types {

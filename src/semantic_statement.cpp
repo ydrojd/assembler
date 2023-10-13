@@ -1,5 +1,3 @@
-//
-
 #include "semantic_statement.h"
 #include "bitwise_functions.h"
 #include "syntax.h"
@@ -8,10 +6,11 @@
 
 //
 // Created by djordy on 12/11/22.
+//
 
 uint word_size(binary_data::allignment_t allignment) { return 1 << (uint) allignment; }
 
-semantic_statements::data_statement::data_statement(const syntax::inst_statement &inst_stmnt,
+semantic_statements::data_statement::data_statement(const syntax::statement &inst_stmnt,
                                                     asm_lang::data_statement_id id) {
 
     this->id = id;
@@ -54,7 +53,6 @@ int semantic_statements::data_statement::get_compile_case(const symbol_table &st
         if (symbol_id == 0) return (int) compile_case_t::undetermined;
         return (int) compile_case_t::label;
     }
-
 
     //if not label address must be register destination case
     const uint offset_bitsize = signed_bitwidth(reg_location_offset);
@@ -188,7 +186,7 @@ semantic_statements::data_statement::get_reloc_type(int comp_case_int,
     assert(!"unreachable");
 }
 
-semantic_statements::jump_statement::jump_statement(const syntax::inst_statement &inst_stmnt,
+semantic_statements::jump_statement::jump_statement(const syntax::statement &inst_stmnt,
                                                     asm_lang::jump_statement_id id) {
     this->id = id;
 
@@ -357,7 +355,7 @@ semantic_statements::jump_statement::get_reloc_type(int comp_case_int,
     assert(!"unreachable");
 }
 
-semantic_statements::branch_statement::branch_statement(const syntax::inst_statement &inst_stmnt,
+semantic_statements::branch_statement::branch_statement(const syntax::statement &inst_stmnt,
                                                         asm_lang::branch_statement_id id) {
     this->id = id;
     if (inst_stmnt.args.size() != 3) throw std::runtime_error("wrong number of arguments");
@@ -473,7 +471,7 @@ semantic_statements::branch_statement::gen_instructions(int comp_case_int, const
     assert(!"unreachable");
 }
 
-semantic_statements::unary_statement::unary_statement(const syntax::inst_statement &inst_stmnt,
+semantic_statements::unary_statement::unary_statement(const syntax::statement &inst_stmnt,
                                                       asm_lang::unary_statement_id id) {
     this->id = id;
 
@@ -554,7 +552,7 @@ semantic_statements::unary_statement::gen_instructions(int comp_case_int, const 
     assert(!"unreachable");
 }
 
-semantic_statements::set_statement::set_statement(const syntax::inst_statement &inst_stmnt,
+semantic_statements::set_statement::set_statement(const syntax::statement &inst_stmnt,
                                                   asm_lang::set_statement_id) {
     this->id = id;
     const auto &args = inst_stmnt.args;
@@ -714,7 +712,7 @@ semantic_statements::set_statement::get_reloc_type(int comp_case_int,
 }
 
 semantic_statements::reg_arith_statement::reg_arith_statement(
-        const syntax::inst_statement &inst_stmnt, asm_lang::reg_arith_statement_id id) {
+        const syntax::statement &inst_stmnt, asm_lang::reg_arith_statement_id id) {
     this->id = id;
     const auto &args = inst_stmnt.args;
 
@@ -904,7 +902,7 @@ semantic_statements::reg_arith_statement::gen_halfword_instructions() const {
 }
 
 semantic_statements::immediate_arith_statement::immediate_arith_statement(
-        const syntax::inst_statement &inst_stmnt, asm_lang::immediate_arith_statement_id id) {
+        const syntax::statement &inst_stmnt, asm_lang::immediate_arith_statement_id id) {
 
     this->id = id;
     auto &args = inst_stmnt.args;
@@ -1065,17 +1063,17 @@ semantic_statements::asm_statement::asm_statement(syntax::statement &&syn_stmnt)
     switch (syn_stmnt.type) {
         case syntax::statement_type::inst:
             type_m = types::instruction_statement;
-            produce_inst_statement(std::move(syn_stmnt.inst), inst_stmnt_ptr_m);
+            produce_inst_statement(std::move(syn_stmnt), inst_stmnt_ptr_m);
             break;
         case syntax::statement_type::dir:
             type_m = types::directive_statement;
-            dir_stmnt_m = directive_statement(std::move(syn_stmnt.dir));
+            dir_stmnt_m = directive_statement(std::move(syn_stmnt));
             break;
     }
 }
 
 void semantic_statements::asm_statement::produce_inst_statement(
-        syntax::inst_statement &&syn_inst_stmnt,
+        syntax::statement &&syn_inst_stmnt,
         std::unique_ptr<semantic_statements::inst_statement_i> &stmnt_ptr) {
 
     asm_lang::inst_statement_info info;
@@ -1120,10 +1118,10 @@ void semantic_statements::asm_statement::produce_inst_statement(
 
 
 semantic_statements::directive_statement::directive_statement(
-        const syntax::dir_statement &syn_dir) {
+        const syntax::statement &syn_dir) {
     asm_lang::directive_info dir_info;
     if (asm_lang::string_to_directive_info(syn_dir.directive, dir_info) == false)
-        throw std::runtime_error("unknown directive");
+        throw std::runtime_error(std::string{"unknown directive: "} + syn_dir.directive);
 
     //---set directive by type--//
     type_m = dir_info.type;
@@ -1156,10 +1154,10 @@ semantic_statements::directive_statement::directive_statement(
         case asm_lang::directive_type::symbol:
             //---set symbol directive---//
             symbol_m.id = dir_info.sym_id;
-            if (syn_dir.args[0].type != syntax::dir_arg_type::label)
+            if (syn_dir.args[0].type != syntax::arg_type::label)
                 throw std::runtime_error("expected label argument");
 
-            symbol_m.identifier = syn_dir.args[0].identifier;
+            symbol_m.identifier = syn_dir.args[0].str_val;
 
             break;
         default:
@@ -1167,7 +1165,7 @@ semantic_statements::directive_statement::directive_statement(
     }
 }
 
-semantic_statements::data_directive::data_directive(const syntax::dir_statement &syn_stmnt,
+semantic_statements::data_directive::data_directive(const syntax::statement &syn_stmnt,
                                                     asm_lang::data_directive_id id) {
     const auto &args = syn_stmnt.args;
 
@@ -1181,7 +1179,7 @@ semantic_statements::data_directive::data_directive(const syntax::dir_statement 
 
     //---check argument types---//
     for (auto &arg: args)
-        if (arg.type != syntax::dir_arg_type::integer)
+        if (arg.type != syntax::arg_type::integer)
             throw std::runtime_error("expected integer arguments");
 
 
@@ -1220,7 +1218,7 @@ semantic_statements::data_directive::data_directive(const syntax::dir_statement 
             bool is_zero_data = (args.size() == 0);
             for (auto &arg: args) {
                 is_zero_data = (is_zero_data && arg.int_val == 0);
-                if (arg.type != syntax::dir_arg_type::integer)
+                if (arg.type != syntax::arg_type::integer)
                     throw std::runtime_error("expected integer argument");
 
                 data.values.push_back(arg.int_val);

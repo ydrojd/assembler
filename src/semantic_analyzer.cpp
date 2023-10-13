@@ -90,10 +90,8 @@ assembly_statements generate_asm_statements(syntax &parser,
     struct assembly_statements statements;
     binary::section_t working_section = binary::section_t::text;
 
-    bool eof = false;
-    for (auto syntax_statement = parser.parse_statement(eof); eof == false;
-         syntax_statement = parser.parse_statement(eof)) {
-
+    for (auto ret = parser.parse_statement(); ret.second != true; ret = parser.parse_statement()) {
+	auto &&syntax_statement = ret.first;
         semantic_statements::asm_statement asm_stmnt(std::move(syntax_statement));
         switch (asm_stmnt.get_type()) {
             case stmnt_types::instruction_statement: {

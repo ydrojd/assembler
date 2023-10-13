@@ -81,31 +81,33 @@ static uint signed_bitwidth(int64_t val) {
     }
 }
 
-static bool set_register(const syntax::inst_arg &arg, reg_t &reg) {
-    if (arg.type != syntax::inst_arg_type::reg) { return false; }
+static bool set_register(const syntax::arg &arg, reg_t &reg) {
+    if (arg.type != syntax::arg_type::reg) { return false; }
 
-    bool found_reg = isa::string_to_reg_id(arg.reg, reg);
+    const bool found_reg = isa::string_to_reg_id(arg.str_val, reg);
     return found_reg;
 }
 
-static bool set_immediate(const syntax::inst_arg &arg, int32_t &imm) {
-    if (arg.type != syntax::inst_arg_type::integer) return false;
+static bool set_immediate(const syntax::arg &arg, int32_t &imm) {
+    const bool is_int = arg.type == syntax::arg_type::integer;
 
-    imm = arg.int_val;
-    return true;
+    if(is_int)
+	imm = arg.int_val;
+
+    return is_int;
 }
 
-static bool set_label_operand(const syntax::inst_arg &arg, label_operand &lbl_op) {
-    if(arg.type != syntax::inst_arg_type::label)
+static bool set_label_operand(const syntax::arg &arg, label_operand &lbl_op) {
+    if(arg.type != syntax::arg_type::label)
         return false;
 
-    lbl_op.label.identifier = arg.label;
+    lbl_op.label.identifier = arg.str_val;
     return true;
 }
 
-static bool set_label_operand_offset(const syntax::inst_arg &arg,
+static bool set_label_operand_offset(const syntax::arg &arg,
                                label_operand &address) {
-    if(arg.type != syntax::inst_arg_type::integer)
+    if(arg.type != syntax::arg_type::integer)
         return false;
 
     address.offset = arg.int_val;
@@ -129,7 +131,7 @@ class reg_arith_statement : public inst_statement_i {
     std::vector<isa::instruction> gen_halfword_instructions() const;
 
 public:
-    reg_arith_statement(const syntax::inst_statement &inst_stmnt, asm_lang::reg_arith_statement_id id);
+    reg_arith_statement(const syntax::statement &inst_stmnt, asm_lang::reg_arith_statement_id id);
     int get_compile_case(const symbol_table &st, uint32_t pc,
                          const program_options &options) const override;
     binary_data::memory_alloc_t get_size(int comp_case_int) const override;
@@ -157,7 +159,7 @@ class immediate_arith_statement : public inst_statement_i {
     int32_t immediate;
 
 public:
-    immediate_arith_statement(const syntax::inst_statement &inst_stmnt,
+    immediate_arith_statement(const syntax::statement &inst_stmnt,
                               asm_lang::immediate_arith_statement_id id);
     int get_compile_case(const symbol_table &st, uint32_t pc,
                          const program_options &options) const override;
@@ -184,7 +186,7 @@ class branch_statement : public inst_statement_i {
     label_operand jump_label;
 
 public:
-    branch_statement(const syntax::inst_statement &inst_stmnt,
+    branch_statement(const syntax::statement &inst_stmnt,
                      asm_lang::branch_statement_id id);
     int get_compile_case(const symbol_table &st, uint32_t pc,
                          const program_options &options) const override;
@@ -217,7 +219,7 @@ class jump_statement : public inst_statement_i {
     label_operand offset;
 
 public:
-    jump_statement(const syntax::inst_statement &inst_stmnt,
+    jump_statement(const syntax::statement &inst_stmnt,
                    asm_lang::jump_statement_id id);
 
     int get_compile_case(const symbol_table &st, uint32_t pc,
@@ -258,7 +260,7 @@ class unary_statement : public inst_statement_i {
     reg_t operand;
 
 public:
-    unary_statement(const syntax::inst_statement &inst_stmnt,
+    unary_statement(const syntax::statement &inst_stmnt,
                     asm_lang::unary_statement_id id);
     int get_compile_case(const symbol_table &st, uint32_t pc,
                          const program_options &options) const override;
@@ -299,7 +301,7 @@ class set_statement : public inst_statement_i {
     int32_t get_source_immediate() const;
 
 public:
-    set_statement(const syntax::inst_statement &inst_stmnt, asm_lang::set_statement_id);
+    set_statement(const syntax::statement &inst_stmnt, asm_lang::set_statement_id);
     int get_compile_case(const symbol_table &st, uint32_t pc,
                          const program_options &options) const override;
     binary_data::memory_alloc_t get_size(int comp_case_int) const override;
@@ -333,7 +335,7 @@ class data_statement : public inst_statement_i {
     asm_lang::data_statement_id id;
 
 public:
-    data_statement(const syntax::inst_statement &inst_stmnt,
+    data_statement(const syntax::statement &inst_stmnt,
                     asm_lang::data_statement_id id);
 
     int get_compile_case(const symbol_table &st, uint32_t pc,
@@ -363,7 +365,7 @@ class data_directive {
 
 public:
     data_directive() = default;
-    data_directive(const syntax::dir_statement &syn_stmnt,
+    data_directive(const syntax::statement &syn_stmnt,
                    asm_lang::data_directive_id id);
     binary_data::memory_alloc_t get_size() const { return data.memory_alloc; }
 
@@ -395,7 +397,7 @@ private:
     symbol_directive symbol_m;
 
 public:
-    directive_statement(const syntax::dir_statement &syn_dir);
+    directive_statement(const syntax::statement &syn_dir);
     directive_statement() = default;
 
     data_directive &get_data() {
@@ -430,7 +432,7 @@ private:
     directive_statement dir_stmnt_m;
 
     static void
-    produce_inst_statement(syntax::inst_statement &&syn_inst_stmnt,
+    produce_inst_statement(syntax::statement &&syn_inst_stmnt,
                            std::unique_ptr<semantic_statements::inst_statement_i> &stmnt_ptr);
 
 public:

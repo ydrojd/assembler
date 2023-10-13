@@ -5,6 +5,7 @@
 #ifndef ASSEMBLER_SYNTAX_H
 #define ASSEMBLER_SYNTAX_H
 
+#include <cstdint>
 #include <vector>
 
 #include "lexer.h"
@@ -23,45 +24,19 @@ public:
         lex_m.fetch_token();
     };
 
-    enum struct dir_arg_type {
-        integer,
-        label,
-        string,
-    };
-
-    struct dir_arg {
-        dir_arg_type type;
-        std::string identifier;
-        int64_t int_val = 0;
-        std::string string;
-    };
-
-    enum struct inst_arg_type {
+    enum struct arg_type {
         integer,
         label,
         reg,
+	string,
     };
 
-    struct inst_arg {
-        inst_arg_type type;
-
-        int64_t int_val = 0;
-        std::string label{""};
-        std::string reg{""};
+    struct arg {
+	arg_type type;
+	std::string str_val;
+	int64_t int_val;
     };
-
-    struct inst_statement {
-        std::string label;
-        std::string mnemonic;
-        std::vector<inst_arg> args;
-    };
-
-    struct dir_statement {
-        std::string label;
-        std::string directive;
-        std::vector <dir_arg> args;
-    };
-
+    
     enum struct statement_type {
         dir,
         inst
@@ -69,25 +44,18 @@ public:
 
     struct statement {
         statement_type type;
-        inst_statement inst;
-        dir_statement dir;
+        std::string label;
+        std::string mnemonic;
+	std::string directive;
+        std::vector<arg> args;
     };
 
-
-    bool is_inst_arg (lexer::token tk) {
-        return (tk.is_integer() ||
-                tk.get_type() == lexer::token::types::label ||
-                tk.get_type() == lexer::token::types::reg);
-    };
-
-    dir_arg parse_dir_arg(lexer::token tk);
-    bool is_dir_arg(lexer::token tk);
-    int64_t parse_int(lexer::token tk);
-    inst_arg parse_inst_arg(lexer::token tk);
-    dir_statement parse_dir_statement(std::string &&label);
-    inst_statement parse_inst_statement(std::string &&label);
-    statement parse_statement(bool &eof);
+    std::pair<syntax::statement, bool> parse_statement();
     void parse_file(std::vector<statement> &tree);
+
+private:
+    std::vector<syntax::arg> parse_arguments();
+    void eat_whitelines(void);
 };
 
 #endif //ASSEMBLER_SYNTAX_H
